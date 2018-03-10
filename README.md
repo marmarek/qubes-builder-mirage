@@ -7,6 +7,25 @@ Recognized builder.conf variables:
 
 - `MIRAGE_KERNEL_PATH` - full path to precompiled unikernel image
 
+Recoginzed `Makefile.builder` variables (for actual unikernel code):
+
+- `MIRAGE_KERNEL_NAME` - name of output file with the unikernel
+- `OCAML_VERSION` - preferred ocaml version (defaults to `system`)
+
+Building the unikernel is done with:
+
+    mirage configure -t xen
+    make depends
+    make
+
+If any additional preparation steps are needed, use `SOURCE_BUILD_DEP` setting
+in `Makefile.builder`. For example:
+
+    SOURCE_BUILD_DEP = my-build-dep
+
+    my-build-dep:
+        opam pin add ...
+
 
 Using mirage templates (Qubes 4.0)
 ----------------------------------

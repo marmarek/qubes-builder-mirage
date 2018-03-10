@@ -1,2 +1,62 @@
+# Makefile for mirage based package build
+#
+# For "API" documentation check Makefile.generic
+#
+# Variables used as "parameters":
+#  DIST
+#  SRC_DIR
+#  COMPONENT
+
+### Load component-specific settings
+
+# Component specific settings. Generic variables:
+#  SOURCE_PREP - make target to run at "prep" stage
+#  SOURCE_BUILD_DEP - make target to run at "build-dep" stage
+#  SOURCE_COPY_IN - make target to run after "copy-in" stage
+#  SOURCE_COPY_OUT - make target to run after "copy-out" stage
+# Above are mainly to extend Makefile with some component-specific actions
+# (like handling additional sources)
+
+
+PACKAGE_LIST = $(MIRAGE_KERNEL_NAME)
+DIST_BUILD_DIR = /
+
+OCAML_VERSION ?= system
+
 update-repo:
+	cp $(BUILDER_REPO_DIR)/$(COMPONENT).xen $(UPDATE_REPO)/
+
+dist-prep:
 	@true
+
+.PHONY: install-opam
+install-opam2:
+	curl https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh -o $(CACHEDIR)/opam-install.sh
+	sha256sum $(CACHEDIR)/opam-install.sh
+	yes '' | sh $(CACHEDIR)/opam-install.sh
+
+install-opam:
+	curl https://raw.githubusercontent.com/ocaml/opam/1.2/shell/opam_installer.sh -o $(CACHEDIR)/opam_installer.sh
+	sha256sum $(CACHEDIR)/opam_installer.sh
+	sh $(CACHEDIR)/opam_installer.sh /usr/local/bin $(OCAML_VERSION)
+
+dist-prepare-chroot: $(shell command -v opam >/dev/null || echo install-opam)
+	@true
+
+opam-switch-%:
+	opam switch set -A $(OCAML_VERSION) $*
+
+dist-build-dep: $(SOURCE_BUILD_DEP)
+dist-build-dep: opam-switch-$(COMPONENT)
+	opam install -y mirage mirage-xen depext
+
+dist-package:
+	cd $(CHROOT_DIR)/$(DIST_SRC) && \
+	eval "`opam config env`" && \
+	mirage configure -t xen && \
+	make depends && \
+	make
+
+dist-copy-out:
+	mkdir -p $(BUILDER_REPO_DIR)
+	cp $(CHROOT_DIR)/$(DIST_SRC)/$(MIRAGE_KERNEL_NAME) $(BUILDER_REPO_DIR)/$(COMPONENT).xen
