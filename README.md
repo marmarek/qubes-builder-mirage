@@ -13,6 +13,9 @@ use. For example:
 
     DISTS_VM = mirage+mirage-firewall
 
+    # Use TEMPLATE_LABEL to have nice template name, without duplicated "mirage"
+    TEMPLATE_LABEL += mirage+mirage-firewall:mirage-firewall
+
 Recoginzed `Makefile.builder` variables (for actual unikernel code):
 
 - `MIRAGE_KERNEL_NAME` - name of output file with the unikernel
@@ -32,6 +35,11 @@ in `Makefile.builder`. For example:
     my-build-dep:
         opam pin add ...
 
+Each component is built in separate opam switch, to avoid dependency conflicts.
+
+**WARNING: opam repository metadata (and packages) are not signed, opam rely on
+https security for repository metadata. It is advised to use DispVM for
+building MirageOS templates**
 
 Using mirage templates (Qubes 4.0)
 ----------------------------------
