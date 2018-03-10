@@ -22,6 +22,8 @@ PACKAGE_LIST = $(MIRAGE_KERNEL_NAME)
 DIST_BUILD_DIR = /
 
 OCAML_VERSION ?= system
+# opam 1.2 expose only md5 checksum to fetch command
+OPAMFETCH := $(MIRAGE_PLUGIN_DIR)/scripts/download-and-log %{url}% %{out}% md5 %{checksum}%
 
 update-repo:
 	cp $(BUILDER_REPO_DIR)/$(COMPONENT).xen $(UPDATE_REPO)/
@@ -38,21 +40,29 @@ install-opam2:
 install-opam:
 	curl https://raw.githubusercontent.com/ocaml/opam/1.2/shell/opam_installer.sh -o $(CACHEDIR)/opam_installer.sh
 	sha256sum $(CACHEDIR)/opam_installer.sh
+	exec 9>&2 && \
+	export OPAMFETCH_LOG_FD=9 && \
 	sh $(CACHEDIR)/opam_installer.sh /usr/local/bin $(OCAML_VERSION)
 
 dist-prepare-chroot: $(shell command -v opam >/dev/null || echo install-opam)
 	@true
 
 opam-switch-%:
+	exec 9>&2 && \
+	export OPAMFETCH_LOG_FD=9 && \
 	opam switch set -A $(OCAML_VERSION) $*
 
 dist-build-dep: $(SOURCE_BUILD_DEP)
 dist-build-dep: opam-switch-$(COMPONENT)
+	exec 9>&2 && \
+	export OPAMFETCH_LOG_FD=9 && \
 	opam install -y mirage mirage-xen depext
 
 dist-package:
 	cd $(CHROOT_DIR)/$(DIST_SRC) && \
 	eval "`opam config env`" && \
+	exec 9>&2 && \
+	export OPAMFETCH_LOG_FD=9 && \
 	mirage configure -t xen && \
 	make depends && \
 	make
@@ -60,3 +70,4 @@ dist-package:
 dist-copy-out:
 	mkdir -p $(BUILDER_REPO_DIR)
 	cp $(CHROOT_DIR)/$(DIST_SRC)/$(MIRAGE_KERNEL_NAME) $(BUILDER_REPO_DIR)/$(COMPONENT).xen
+	-sha256sum $(BUILDER_REPO_DIR)/$(COMPONENT).xen

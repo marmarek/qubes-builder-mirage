@@ -1,0 +1,53 @@
+#!/bin/sh
+
+set -e
+
+if [ -z "$OPAMFETCH_LOG_FD" ]; then
+    OPAMFETCH_LOG_FD=2
+fi
+
+usage() {
+    echo "Usage: $0 URL OUTPUT HASH-ALGO HASH-VALUE" >&2
+}
+
+if [ $# -lt 4 ]; then
+    usage
+    exit 1
+fi
+
+url="$1"
+output="$2"
+hash_algo="$3"
+hash_value="$4"
+
+tmpdir=$(mktemp -d)
+
+trap "rm -rf \"$tmpdir\"" EXIT
+
+download_file="$tmpdir/file"
+
+wget -O "$download_file" "$url"
+
+if [ -n "$hash_algo" -n "$hash_value" ]; then
+    case "$hash_algo" in
+        md5) download_hash_value=$(md5sum "$download_file"|cut -f 1 -d ' ') ;;
+        sha256) download_hash_value=$(sha256sum "$download_file"|cut -f 1 -d ' ') ;;
+        sha512) download_hash_value=$(sha512sum "$download_file"|cut -f 1 -d ' ') ;;
+        *) echo "ERROR: Unsupported hash: $hash_algo" >&$OPAMFETCH_LOG_FD; exit 1;;
+    esac
+
+    if [ "$download_hash_value" = "$hash_value" ]; then
+        mv "$download_file" "$output"
+        # always log sha512, even if opam compares only md5
+        sha512sum "$output" >&$OPAMFETCH_LOG_FD
+        exit 0
+    else
+        echo "ERROR: Invalid hash for $output: $download_hash_value != $hash_value" >&$OPAMFETCH_LOG_FD
+        exit 1
+    fi
+else
+    mv "$download_file" "$output"
+    # always log sha512, even if opam compares only md5
+    sha512sum "$output" >&$OPAMFETCH_LOG_FD
+    exit 0
+fi
