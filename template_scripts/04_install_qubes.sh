@@ -34,13 +34,13 @@ if [ "0$TEMPLATE_ROOT_WITH_PARTITIONS" -eq 1 ]; then
     dev=${dev%p?}
 
     # convert GPT to MBR partition table, because pvgrub (legacy) can't GPT
-    sfdisk -d "$dev" |\
+    /sbin/sfdisk -d "$dev" |\
         sed -e 's/^label: gpt/label:dos/;/^label-/d;/^device:/d;/-lba: /d;s/type=.*/type=83/' |\
-        sfdisk "$dev"
-    
+        /sbin/sfdisk "$dev"
+
     bootdev=${dev}p1
     # pvgrub (legacy) also can't ext4, so create ext2 for it
-    mkfs.ext2 -F "$bootdev"
+    /sbin/mkfs.ext2 -F "$bootdev"
     mount "$bootdev" "$INSTALLDIR/boot"
     mkdir -p "${INSTALLDIR}/boot"
     # and create /boot -> . symlink so it doesn't matter if grub looks for
@@ -49,7 +49,7 @@ if [ "0$TEMPLATE_ROOT_WITH_PARTITIONS" -eq 1 ]; then
 else
     # pvgrub (lagacy) can't ext4
     umount "$dev"
-    mkfs.ext2 -F "$dev"
+    /sbin/mkfs.ext2 -F "$dev"
     mount "$dev" "$INSTALLDIR"
     mkdir -p "${INSTALLDIR}/boot"
 fi
