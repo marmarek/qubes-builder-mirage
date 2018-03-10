@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+
+orig_PATH=${PATH#*:}
+if [ "$1" = "install" ]; then
+    packages=()
+    for opt in "$@"; do
+        case "$opt" in
+            -*) ;;
+            install) ;;
+            *) packages+=( "$opt" );;
+        esac
+    done
+    PATH="$orig_PATH" $MIRAGE_PLUGIN_DIR/scripts/download-archives-and-log-hashes "${packages[@]}"
+fi
+orig_opam=$(PATH="$orig_PATH" which opam)
+exec -a opam $orig_opam "$@"

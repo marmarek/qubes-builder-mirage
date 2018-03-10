@@ -1,0 +1,56 @@
+#!/bin/sh
+
+set -e
+
+tmpdir=$(mktemp -d)
+trap "rm -rf \"$tmpdir\"" EXIT
+install_info="$tmpdir/install_info.json"
+
+if [ -z "$OPAMROOT" ]; then
+    OPAMROOT="$HOME/.opam"
+fi
+
+opam install --dry-run -y --json="$install_info" "$@"
+if [ "$(cat "$install_info")" = "[]" ]; then
+    echo "Nothing to download" >&2
+    exit 0
+fi
+for package in $(jq '.[0][].install | objects | (.name + "." + .version)' < "$install_info" | tr -d '"'); do
+    url=$(opam info -f upstream-url "$package")
+    case "$url" in
+        /*) echo "Skipping local source" >&2; continue;;
+    esac
+    archive_basename=$(basename "$url")
+    archive_file="$OPAMROOT/archives/$archive_basename"
+    if [ -f "$archive_file" ]; then
+        echo "$archive_file already exists, skipping"
+        continue
+    fi
+    archive_tmp_file="$tmpdir/$archive_basename"
+    wget -O "$archive_tmp_file" "$url"
+
+    repo_info=$(grep "^$package" "$OPAMROOT"/repo/package-index)
+    repo_name=$(echo "$repo_info" | cut -f 2 -d ' ')
+    package_name=$(echo "$repo_info" | cut -f 3 -d ' ')
+    for checksum in $(grep ^checksum: "$OPAMROOT/repo/$repo_name/packages/$package_name/$package/url"|cut -f 2 -d ' '|tr -d '"'); do
+        checksum_value=${checksum#*=}
+        if [ "$checksum_value" != "$checksum" ]; then
+            checksum_algo=${checksum%=*}
+        else
+            checksum_algo="md5"
+        fi
+        if echo "$checksum_algo" | grep -q "^\(md5\|sha256\|sha512\)\$"; then
+            file_checksum=$(${checksum_algo}sum "$archive_tmp_file" | cut -f 1 -d ' ')
+        else
+            echo "Unknown hash algorithm: $checksum_algo" >&2
+            exit 1
+        fi
+        if [ "$file_checksum" = "$checksum_value" ]; then
+            # file ok, move to archive dir
+            mv "$archive_tmp_file" "$archive_file"
+        else
+            echo "$archive_tmp_file checksum mismatch ($file_checksum != $checksum_value), abort" >&2
+            exit 1
+        fi
+    done
+done
