@@ -57,6 +57,16 @@ fi
 # =============================================================================
 # boot files
 # =============================================================================
+
+if [ -z "$MIRAGE_KERNEL_PATH" ] && [ -z "$TEMPLATE_FLAVOR" ]; then
+    echo "ERROR: Unikernel path not specified! Use MIRAGE_KERNEL_PATH or point a component with template flavor" >&2
+    exit 1
+fi
+
+if [ -z "$MIRAGE_KERNEL_PATH" ]; then
+    MIRAGE_KERNEL_PATH="pkgs-for-template/$DIST/$TEMPLATE_FLAVOR.xen"
+fi
+
 cp "$MIRAGE_KERNEL_PATH" "$INSTALLDIR/boot/kernel"
 mkdir "$INSTALLDIR/boot/grub"
 # pvgrub legacy configuration

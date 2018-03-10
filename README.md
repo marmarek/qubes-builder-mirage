@@ -1,11 +1,17 @@
 qubes-builder plugin for MirageOS based templates
 -------------------------------------------------
 
-
 Recognized builder.conf variables:
 
-
 - `MIRAGE_KERNEL_PATH` - full path to precompiled unikernel image
+
+Alternatively to the above, you can use template flavor to point a component
+(configured in COMPONENTS setting of builder.conf) that contains a unikernel to
+use. For example:
+
+    COMPONENTS += mirage-firewall
+
+    DISTS_VM = mirage+mirage-firewall
 
 Recoginzed `Makefile.builder` variables (for actual unikernel code):
 
