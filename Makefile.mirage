@@ -31,26 +31,19 @@ update-repo:
 dist-prep:
 	@true
 
-.PHONY: install-opam
 install-opam2:
 	curl https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh -o $(CACHEDIR)/opam-install.sh
 	sha256sum $(CACHEDIR)/opam-install.sh
 	yes '' | sh $(CACHEDIR)/opam-install.sh
 
-install-opam:
-	curl https://raw.githubusercontent.com/ocaml/opam/1.2/shell/opam_installer.sh -o $(CACHEDIR)/opam_installer.sh
-	sha256sum $(CACHEDIR)/opam_installer.sh
-	exec 9>&2 && \
-	export OPAMFETCH_LOG_FD=9 && \
-	sh $(CACHEDIR)/opam_installer.sh /usr/local/bin $(OCAML_VERSION)
-
-dist-prepare-chroot: $(shell command -v opam >/dev/null || echo install-opam)
-	@true
+dist-prepare-chroot: $(shell command -v opam >/dev/null || echo install-opam2)
+	opam init -y
 
 opam-switch-%:
 	exec 9>&2 && \
 	export OPAMFETCH_LOG_FD=9 && \
-	opam switch set -A $(OCAML_VERSION) $*
+	opam switch set $* || \
+	opam switch create $* $(OCAML_VERSION)
 
 dist-build-dep: $(SOURCE_BUILD_DEP)
 dist-build-dep: opam-switch-$(COMPONENT)
