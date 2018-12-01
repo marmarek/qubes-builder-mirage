@@ -26,7 +26,7 @@ OCAML_VERSION ?= system
 OPAMFETCH := $(MIRAGE_PLUGIN_DIR)/scripts/download-and-log %{url}% %{out}% md5 %{checksum}%
 
 update-repo:
-	cp $(BUILDER_REPO_DIR)/$(COMPONENT).xen $(UPDATE_REPO)/
+	cp $(BUILDER_REPO_DIR)/$(TEMPLATE_FLAVOR).xen $(UPDATE_REPO)/
 
 dist-prep:
 	@true
