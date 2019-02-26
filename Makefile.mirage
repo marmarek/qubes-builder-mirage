@@ -38,6 +38,7 @@ install-opam2:
 
 dist-prepare-chroot: $(shell command -v opam >/dev/null || echo install-opam2)
 	opam init -y
+	opam update -y
 
 opam-switch-%:
 	exec 9>&2 && \
