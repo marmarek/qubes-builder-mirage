@@ -44,7 +44,7 @@ opam-switch-%:
 	exec 9>&2 && \
 	export OPAMFETCH_LOG_FD=9 && \
 	opam switch set $*-$(OCAML_VERSION) || \
-	opam switch create $*-$(OCAML_VERSION) $(OCAML_VERSION)
+	opam switch create $*-$(OCAML_VERSION) ocaml-base-compiler.$(OCAML_VERSION)
 
 dist-build-dep: $(SOURCE_BUILD_DEP)
 dist-build-dep: opam-switch-$(COMPONENT)
