@@ -37,7 +37,7 @@ install-opam2:
 	yes '' | sh $(CACHEDIR)/opam-install.sh
 
 dist-prepare-chroot: $(shell command -v opam >/dev/null || echo install-opam2)
-	opam init -y
+	opam init -y --bare
 	opam update -y
 
 opam-switch-%:
