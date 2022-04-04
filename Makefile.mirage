@@ -50,7 +50,7 @@ dist-build-dep: $(SOURCE_BUILD_DEP)
 dist-build-dep: opam-switch-$(COMPONENT)
 	exec 9>&2 && \
 	export OPAMFETCH_LOG_FD=9 && \
-	opam install -y mirage mirage-xen depext
+	opam install -y mirage mirage-xen
 
 dist-package:
 	cd $(CHROOT_DIR)/$(DIST_SRC) && \
@@ -59,7 +59,7 @@ dist-package:
 	export OPAMFETCH_LOG_FD=9 && \
 	mirage configure -t xen && \
 	make depends && \
-	make
+	dune build
 
 dist-copy-out:
 	mkdir -p $(BUILDER_REPO_DIR)
