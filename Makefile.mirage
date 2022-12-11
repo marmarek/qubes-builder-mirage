@@ -37,6 +37,7 @@ install-opam2:
 	yes '' | sh $(CACHEDIR)/opam-install.sh
 
 dist-prepare-chroot: $(shell command -v opam >/dev/null || echo install-opam2)
+	sudo mount -o remount,nr_inodes=1m /tmp
 	opam init -y --bare
 	opam update -y
 
@@ -50,7 +51,7 @@ dist-build-dep: $(SOURCE_BUILD_DEP)
 dist-build-dep: opam-switch-$(COMPONENT)
 	exec 9>&2 && \
 	export OPAMFETCH_LOG_FD=9 && \
-	opam install -y mirage mirage-xen depext
+	opam install -y mirage mirage-xen
 
 dist-package:
 	cd $(CHROOT_DIR)/$(DIST_SRC) && \
